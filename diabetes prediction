@@ -1,0 +1,74 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# Load the dataset
+file_path = "/content/diabetes.csv"
+df = pd.read_csv(file_path)
+
+# Display first few rows
+display(df.head())
+
+# Check for missing values
+print("Missing values:")
+print(df.isnull().sum())
+
+# Splitting features and target variable
+X = df.iloc[:, :-1]  # All columns except the last one (features)
+y = df.iloc[:, -1]   # Last column (target)
+
+# Splitting the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train a Random Forest model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy:.2f}")
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Confusion matrix
+plt.figure(figsize=(6, 4))
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d', cmap='Blues', xticklabels=['No Diabetes', 'Diabetes'], yticklabels=['No Diabetes', 'Diabetes'])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
+# Function to take user input and predict diabetes
+def predict_diabetes():
+    print("Enter patient details:")
+    user_data = []
+    for col in df.columns[:-1]:
+        value = float(input(f"Enter {col}: "))
+        user_data.append(value)
+
+    # Convert input into a DataFrame with correct column names
+    user_data = pd.DataFrame([user_data], columns=df.columns[:-1])
+
+    # Scale the input data
+    user_data = scaler.transform(user_data)
+
+    # Predict
+    prediction = model.predict(user_data)
+    result = "Diabetic" if prediction[0] == 1 else "Non-Diabetic"
+    print(f"Prediction: {result}")
+
+# Get user input for prediction
+predict_diabetes()
